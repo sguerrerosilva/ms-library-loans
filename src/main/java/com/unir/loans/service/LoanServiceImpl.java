@@ -1,6 +1,11 @@
 package com.unir.loans.service;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.fge.jsonpatch.JsonPatchException;
+import com.github.fge.jsonpatch.mergepatch.JsonMergePatch;
 import com.google.gson.Gson;
 import com.unir.loans.data.LoanRepository;
 import com.unir.loans.fecade.LoansFecade;
@@ -11,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
@@ -26,12 +30,19 @@ public class LoanServiceImpl {
     @Autowired
     private LoansFecade loansFecade;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     public List<Loan> getLoans(Integer idBook, String idClient, String status){
 
         if( idBook != null || StringUtils.hasLength(idClient) ||  StringUtils.hasLength(status)){
             return repository.search(idBook,idClient,status);
         }
         return repository.getLoans();
+    }
+
+    public Loan getLoan(Long idLoan){
+        return repository.getLoan(idLoan);
     }
 
     public Loan addLoan(CreateLoanRequest request){
@@ -53,6 +64,23 @@ public class LoanServiceImpl {
             return loan;
         }
         return null;
+    }
+
+    public Loan updateLoan(Long idLoan, String request){
+        Loan loan = repository.getLoan(idLoan);
+        if (loan != null){
+            try{
+                JsonMergePatch jsonMergePatch = JsonMergePatch.fromJson(objectMapper.readTree(request));
+                JsonNode target = jsonMergePatch.apply(objectMapper.readTree(objectMapper.writeValueAsString(loan)));
+                Loan bookPatched = objectMapper.treeToValue(target, Loan.class);
+                return repository.save(bookPatched);
+            }catch (JsonProcessingException | JsonPatchException e){
+                log.error("Error updating book: {}",idLoan);
+                return null;
+            }
+        }else{
+            return null;
+        }
     }
 
 
