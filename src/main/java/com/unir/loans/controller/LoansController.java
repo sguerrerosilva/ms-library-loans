@@ -62,6 +62,32 @@ public class LoansController {
     }
 
 
+    @Operation(
+            operationId = "Obtener prestamos",
+            description = "Operacion de lectura",
+            summary = "Se devuelve un prestamo correspondiente a partir del identificador.")
+    @ApiResponse(
+            responseCode = "200",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Loan.class)))
+    @ApiResponse(
+            responseCode = "404",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Void.class)),
+            description = "No se ha encontrado el prestamo con el identificador indicado.")
+    @ApiResponse(
+            responseCode = "500",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Void.class)),
+            description = "Error interno del servidor interno.")
+    @GetMapping("/loans/{idLoan}")
+    public ResponseEntity<Loan> getLoan( @PathVariable Long idLoan){
+
+        Loan loans = service.getLoan(idLoan);
+        if (loans != null) {
+            return ResponseEntity.ok(loans);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     @PostMapping("/loans")
     @Operation(
             operationId = "Insertar un prestamo",
@@ -88,6 +114,37 @@ public class LoansController {
         if (createdLoan != null) {
             return ResponseEntity.status(HttpStatus.CREATED).body(createdLoan);
         } else {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+
+    @PatchMapping("/loans/{idLoan}")
+    @Operation(
+            operationId = "Modificar parcialmente una reserva",
+            description = "RFC 7386. Operacion de escritura",
+            summary = "RFC 7386. Se modifica parcialmente una reserva.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    description = "Datos de la reserva a modificar.",
+                    required = true,
+                    content = @Content(mediaType = "application/merge-patch+json", schema = @Schema(implementation = String.class))))
+    @ApiResponse(
+            responseCode = "200",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Loan.class)))
+    @ApiResponse(
+            responseCode = "400",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Void.class)),
+            description = "Reserva inválido o datos incorrectos introducidos.")
+    @ApiResponse(
+            responseCode = "500",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Void.class)),
+            description = "Error interno del servidor interno.")
+    public ResponseEntity<Loan> patchLoan(@PathVariable Long idLoan, @RequestBody String patchBody){
+        log.info("init patch");
+        Loan bookPatched = service.updateLoan(idLoan, patchBody);
+        if (bookPatched != null){
+            return ResponseEntity.ok(bookPatched);
+        }else{
             return ResponseEntity.badRequest().build();
         }
     }

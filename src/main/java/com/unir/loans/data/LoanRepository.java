@@ -16,9 +16,13 @@ public class LoanRepository {
 
     private final LoanJpaRepository repository;
 
+    public Loan getLoan(Long idLoan) {
+        return repository.findById(idLoan).orElse(null);
+    }
+
     public List<Loan> getLoans(){ return repository.findAll(); }
 
-    public void save(Loan loan) {repository.save(loan);    }
+    public Loan save(Loan loan) {return repository.save(loan);    }
 
     public List<Loan> search(Integer idBook, String idClient, String status) {
         SearchCriteria<Loan> spec = new SearchCriteria<>();
