@@ -15,6 +15,9 @@ public class LoansApplication {
 	public RestTemplate restTemplate() { return new RestTemplate();}
 
 	public static void main(String[] args) {
+
+		String profile = System.getenv("PROFILE");
+		System.setProperty("spring.profiles.active", profile != null ? profile : "default");
 		SpringApplication.run(LoansApplication.class, args);
 	}
 
